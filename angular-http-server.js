@@ -16,7 +16,6 @@ const getFilePathFromUrl = require('./lib/get-file-path-from-url');
 
 const NO_PATH_FILE_ERROR_MESSAGE = "Error: index.html could not be found in the specified path ";
 const NO_ROOT_FILE_ERROR_MESSAGE = "Error: Could not find index.html within the working directory.";
-const basePath = argv.path ? path.resolve(argv.path) : process.cwd();
 
 if (argv.config) {
   let configPath;
@@ -36,6 +35,7 @@ if (argv.config) {
   // supplement argv with config, but CLI args take precedence
   argv = Object.assign({}, config, argv);
 }
+const basePath = argv.path ? path.resolve(argv.path) : process.cwd();
 
 // As a part of the startup - check to make sure we can access index.html
 returnDistFile(true);
