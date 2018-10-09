@@ -104,7 +104,12 @@ The `--https` or `--ssl` flags are intended for development and/or testing purpo
 1.5.0 - add --open option
 1.4.0 - add --path option
 
-## Dev notes
+## Testing
+
+Run unit tests with
+```sh
+$ yarn run test
+```
 
 Test latest version, e.g.
 ```sh

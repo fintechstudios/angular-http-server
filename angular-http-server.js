@@ -9,12 +9,14 @@ var https = require('https');
 var http = require("http");
 var opn = require('opn');
 
+const getFilePathFromUrl = require('./lib/get-file-path-from-url');
+
 
 
 
 const NO_PATH_FILE_ERROR_MESSAGE = "Error: index.html could not be found in the specified path ";
 const NO_ROOT_FILE_ERROR_MESSAGE = "Error: Could not find index.html within the working directory.";
-
+const basePath = argv.path ? path.resolve(argv.path) : process.cwd();
 
 if (argv.config) {
   let configPath;
@@ -95,15 +97,7 @@ function requestListener(req, res) {
         }
     }
 
-    // Request is for a page instead
-    // Only interested in the part before any query params
-    var url = req.url.split('?')[0]
-    // Attaches path prefix with --path option
-    var possibleFilename = resolveUrl(url.slice(1)) || "dummy";
-
-    var safeFileName = path.normalize(possibleFilename).replace(/^(\.\.[\/\\])+/, '');
-    // Insert "." to ensure file is read relatively (Security)
-    var safeFullFileName = path.join(".", safeFileName);
+    const safeFullFileName = getFilePathFromUrl(req.url, basePath);
 
     fs.stat(safeFullFileName, function (err, stats) {
         var fileBuffer;
@@ -139,45 +133,19 @@ function getPort() {
 
 function returnDistFile(displayFileMessages = false) {
     var distPath;
-    var argvPath = argv.path;
 
-    if (argvPath) {
-        try {
-            if (displayFileMessages) {
-                log("Path specified: %s", argvPath);
-            }
-            distPath = path.join(argvPath, 'index.html');
-            if (displayFileMessages) {
-                log("Using %s", distPath);
-            }
-            return fs.readFileSync(distPath);
-        } catch (e) {
-            console.warn(NO_PATH_FILE_ERROR_MESSAGE + "%s", argvPath);
-            process.exit(1);
-        }
-    } else {
+    try {
         if (displayFileMessages) {
-            log("Info: Path not specified using the working directory.");
+            log("Serving from path: %s", basePath);
         }
-        distPath = "index.html";
-        try {
-            return fs.readFileSync(distPath);
-        } catch (e) {
-            console.warn(NO_ROOT_FILE_ERROR_MESSAGE);
-            process.exit(1);
+        distPath = path.join(basePath, 'index.html');
+        if (displayFileMessages) {
+            log("Using default file: %s", distPath);
         }
-    }
-}
-
-function resolveUrl(filename) {
-    // basic santizing to prevent attempts to read files outside of directory set
-    if (filename.includes("..")) {
-        return null;
-    }
-    if (filename && argv.path) {
-        return path.join(argv.path, filename);
-    } else {
-        return filename;
+        return fs.readFileSync(distPath);
+    } catch (e) {
+        console.warn(NO_PATH_FILE_ERROR_MESSAGE + "%s", basePath);
+        process.exit(1);
     }
 }
 
